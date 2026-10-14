@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planeta Android - Tienda Oficial & Catálogo</title>
+<meta name="description" content="Planeta Android: accesorios, reparaciones y equipos en San Justo. Armá tu pedido y envialo por WhatsApp.">
+<meta property="og:title" content="Planeta Android - Catálogo">
+<meta property="og:description" content="Accesorios, reparaciones y equipos en San Justo.">
+<meta property="og:type" content="website">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+.toast{position:fixed;bottom:90px;right:20px;background:#10B981;color:#fff;padding:12px 24px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,.1);z-index:1000}
+.toast.error{background:#EF4444}
+.editable:hover{outline:2px dashed #3b82f6;cursor:pointer}
+dialog{border:0;border-radius:12px;padding:0;max-width:92vw;width:420px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+</style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
+
+<header class="bg-blue-900 text-white shadow-md">
+  <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+    <div class="flex items-center space-x-3">
+      <div class="bg-white text-blue-900 font-bold p-3 rounded-full text-xl shadow w-12 h-12 flex items-center justify-center">P</div>
+      <div>
+        <h1 class="text-2xl font-bold">Planeta Android</h1>
+        <a href="https://www.google.com/maps/search/?api=1&query=Monta%C3%B1eses+3903+San+Justo" target="_blank" rel="noopener" class="text-blue-200 text-sm hover:underline">Montañeses 3903/3905, San Justo</a>
+      </div>
+    </div>
+    <div class="flex items-center space-x-3">
+      <a href="https://wa.me/5491137733258" target="_blank" rel="noopener" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center shadow transition">
+        <i class="fab fa-whatsapp mr-2 text-lg"></i> WhatsApp
+      </a>
+      <button id="btnAdmin" class="bg-blue-800 hover:bg-blue-700 p-2 rounded-lg shadow transition w-10 h-10" title="Administrador" aria-label="Administrador"><i class="fas fa-cog text-lg"></i></button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
+  <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+    <div class="flex flex-wrap gap-2 w-full md:w-auto" id="cats"></div>
+    <div class="flex gap-2 w-full md:w-auto">
+      <input type="text" id="buscar" placeholder="Buscar productos..." class="flex-1 md:w-60 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+      <select id="orden" class="px-2 py-2 border rounded-lg bg-white text-sm">
+        <option value="nuevo">Más nuevos</option>
+        <option value="menor">Menor precio</option>
+        <option value="mayor">Mayor precio</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="flex justify-between items-center mb-4 border-b pb-2">
+    <h2 class="text-xl font-bold">Productos</h2>
+    <button id="btnNuevo" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow"><i class="fas fa-plus mr-1"></i> Agregar producto</button>
+  </div>
+  <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div class="col-span-full text-center py-12 text-gray-500"><i class="fas fa-spinner fa-spin text-3xl mb-2"></i><p>Cargando catálogo...</p></div>
+  </div>
+</main>
+
+<footer class="bg-gray-800 text-white py-6 mt-12">
+  <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-400">
+    <p>Montañeses 3903/3905, San Justo • Planeta Android</p>
+    <p class="mt-1">© 2026 Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<!-- Botón carrito -->
+<button id="btnCarrito" class="fixed bottom-5 right-5 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg z-50 text-xl" aria-label="Ver pedido">
+  <i class="fas fa-shopping-cart"></i>
+  <span id="cantCarrito" class="absolute -top-1 -right-1 bg-red-600 text-xs rounded-full w-6 h-6 flex items-center justify-center">0</span>
+</button>
+
+<!-- Modal carrito -->
+<dialog id="dlgCarrito"><div class="p-5">
+  <h3 class="text-lg font-bold mb-3">Tu pedido</h3>
+  <div id="itemsCarrito" class="space-y-2 max-h-72 overflow-y-auto"></div>
+  <p id="totalCarrito" class="text-right font-bold text-lg mt-3"></p>
+  <div class="flex gap-2 mt-4">
+    <button id="cerrarCarrito" class="flex-1 border rounded-lg py-2">Seguir viendo</button>
+    <button id="enviarPedido" class="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-lg py-2 font-semibold"><i class="fab fa-whatsapp mr-1"></i> Enviar pedido</button>
+  </div>
+</div></dialog>
+
+<!-- Modal login -->
+<dialog id="dlgLogin"><form id="formLogin" class="p-5 space-y-3">
+  <h3 class="text-lg font-bold">Ingreso de administrador</h3>
+  <input id="loginEmail" type="email" required placeholder="Email" autocomplete="username" class="w-full border rounded-lg px-3 py-2">
+  <input id="loginPass" type="password" required placeholder="Contraseña" autocomplete="current-password" class="w-full border rounded-lg px-3 py-2">
+  <div class="flex gap-2">
+    <button type="button" id="cancelLogin" class="flex-1 border rounded-lg py-2">Cancelar</button>
+    <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 font-semibold">Ingresar</button>
+  </div>
+</form></dialog>
+
+<!-- Modal producto -->
+<dialog id="dlgProd"><form id="formProd" class="p-5 space-y-3">
+  <h3 id="tituloProd" class="text-lg font-bold">Producto</h3>
+  <input id="fNombre" required placeholder="Nombre" class="w-full border rounded-lg px-3 py-2">
+  <div class="flex gap-2">
+    <select id="fCategoria" class="flex-1 border rounded-lg px-3 py-2 bg-white"></select>
+    <input id="fPrecio" type="number" min="0" step="any" placeholder="Precio" class="w-32 border rounded-lg px-3 py-2">
+  </div>
+  <textarea id="fDesc" rows="3" placeholder="Descripción" class="w-full border rounded-lg px-3 py-2"></textarea>
+  <div class="flex items-center gap-3">
+    <img id="fPreview" alt="Vista previa" class="w-20 h-20 object-cover rounded-lg border bg-gray-100">
+    <div class="flex-1">
+      <label for="fFoto" class="block text-center bg-gray-800 hover:bg-gray-700 text-white rounded-lg py-2 text-sm cursor-pointer"><i class="fas fa-image mr-1"></i> Elegir foto</label>
+      <input id="fFoto" type="file" accept="image/*" class="hidden">
+      <p id="fFotoEstado" class="text-xs text-gray-500 mt-1">Desde la galería o la cámara</p>
+    </div>
+  </div>
+  <label class="flex items-center gap-2 text-sm"><input id="fAgotado" type="checkbox"> Agotado</label>
+  <div class="flex gap-2">
+    <button type="button" id="cancelProd" class="flex-1 border rounded-lg py-2">Cancelar</button>
+    <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 font-semibold">Guardar</button>
+  </div>
+</form></dialog>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD1I0wcNBE5nRxYz44NB_cATIOy9bvKucw",
+  authDomain: "red-club-6cd9e.firebaseapp.com",
+  projectId: "red-club-6cd9e",
+  storageBucket: "red-club-6cd9e.firebasestorage.app",
+  messagingSenderId: "1057947066214",
+  appId: "1:1057947066214:web:a1b61afa5ddb246e5f32a7"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const MI_NEGOCIO_ID = "LafayZx4DbdWEuEDl5rTYWytZdV2";
+const FILTRAR_POR_NEGOCIO = false; // poné true si el proyecto se comparte con otra app
+const WHATSAPP = "5491137733258";
+const CATS = ["Accesorios", "Reparaciones", "Equipos"];
+const PH = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="100%" height="100%" fill="#e5e7eb"/><text x="50%" y="50%" fill="#9ca3af" font-family="sans-serif" font-size="18" text-anchor="middle">Sin imagen</text></svg>');
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const money = n => "$" + Number(n).toLocaleString("es-AR");
+const urlSegura = u => /^https?:\/\//i.test(u || "") || /^data:image\//i.test(u || "") ? u : PH;
+
+let productos = [];
+let admin = false;
+let filtro = { cat: "todos", q: "", orden: "nuevo" };
+let carrito = {};
+try { carrito = JSON.parse(localStorage.getItem("carrito") || "{}"); } catch (e) { carrito = {}; }
+
+function toast(msg, error = false) {
+  const d = document.createElement("div");
+  d.className = "toast" + (error ? " error" : "");
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3500);
+}
+
+/* ---------- Categorías ---------- */
+function pintarCategorias() {
+  $("cats").innerHTML = ["todos", ...CATS].map(c => {
+    const on = filtro.cat === c;
+    return `<button data-cat="${esc(c)}" class="px-4 py-2 rounded-full text-sm font-medium shadow-sm transition ${on ? "bg-yellow-400 text-gray-900" : "bg-gray-800 text-white"}">${c === "todos" ? "Todos" : esc(c)}</button>`;
+  }).join("");
+}
+$("fCategoria").innerHTML = CATS.map(c => `<option>${esc(c)}</option>`).join("");
+
+/* ---------- Catálogo ---------- */
+async function cargar() {
+  try {
+    const snap = await getDocs(collection(db, "productos"));
+    productos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (FILTRAR_POR_NEGOCIO) productos = productos.filter(p => p.negocioId === MI_NEGOCIO_ID);
+    // Limpia del carrito productos que ya no existen
+    Object.keys(carrito).forEach(id => { if (!productos.some(p => p.id === id)) delete carrito[id]; });
+    render();
+  } catch (e) {
+    console.error(e);
+    $("grid").innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-xl border p-8 text-red-500"><i class="fas fa-exclamation-circle text-3xl mb-2"></i><h3 class="text-lg font-semibold">No se pudo cargar el catálogo</h3><p class="text-sm text-gray-500 mt-1">Revisá tu conexión e intentá de nuevo.</p></div>`;
+  }
+}
+
+function aplicarFiltros() {
+  const q = filtro.q.toLowerCase();
+  let lista = productos.filter(p =>
+    (filtro.cat === "todos" || p.categoria === filtro.cat) &&
+    (!q || (p.nombre || "").toLowerCase().includes(q) || (p.descripcion || "").toLowerCase().includes(q)));
+  const ms = p => (p.creado && p.creado.toMillis ? p.creado.toMillis() : 0);
+  if (filtro.orden === "menor") lista.sort((a, b) => (a.precio || 0) - (b.precio || 0));
+  else if (filtro.orden === "mayor") lista.sort((a, b) => (b.precio || 0) - (a.precio || 0));
+  else lista.sort((a, b) => ms(b) - ms(a));
+  return lista;
+}
+
+function render() {
+  const lista = aplicarFiltros();
+  if (!lista.length) {
+    $("grid").innerHTML = `<div class="col-span-full text-center py-12 bg-white rounded-xl border p-8"><i class="fas fa-box-open text-4xl text-gray-400 mb-3"></i><h3 class="text-lg font-semibold text-gray-700">No hay productos para mostrar</h3><p class="text-sm text-gray-500 mt-1">${productos.length ? "Probá con otra búsqueda o categoría." : "Ingresá como administrador para agregar productos."}</p></div>`;
+    pintarCarrito();
+    return;
+  }
+  $("grid").innerHTML = lista.map(p => {
+    const precio = p.precio > 0 ? money(p.precio) : "Consultar precio";
+    const agotado = !!p.agotado;
+    return `<div class="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between relative" data-id="${esc(p.id)}">
+      ${admin ? `<div class="absolute top-2 right-2 flex gap-1 z-10">
+        <button data-act="editar" class="bg-blue-600 text-white w-8 h-8 rounded-full text-xs shadow" title="Editar"><i class="fas fa-pen"></i></button>
+        <button data-act="eliminar" class="bg-red-600 text-white w-8 h-8 rounded-full text-xs shadow" title="Eliminar"><i class="fas fa-trash"></i></button></div>` : ""}
+      <div>
+        <div class="relative">
+          <img src="${esc(urlSegura(p.imagen))}" alt="${esc(p.nombre)}" loading="lazy" class="w-full h-48 object-cover ${agotado ? "opacity-50" : ""}">
+          ${agotado ? `<span class="absolute top-2 left-2 bg-gray-900 text-white text-xs font-semibold px-2 py-1 rounded">Agotado</span>` : ""}
+        </div>
+        <div class="p-4">
+          <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold">${esc(p.categoria || "General")}</span>
+          <h3 class="font-bold text-lg mt-2">${esc(p.nombre || "Sin nombre")}</h3>
+          <p class="text-gray-600 text-sm mt-1 line-clamp-2">${esc(p.descripcion || "")}</p>
+        </div>
+      </div>
+      <div class="p-4 pt-0">
+        <div class="flex justify-between items-center mb-3">
+          <span class="${p.precio > 0 ? "text-xl text-green-600" : "text-base text-gray-500"} font-bold">${precio}</span>
+        </div>
+        <div class="flex gap-2">
+          <a href="https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Hola, quiero consultar por el producto: " + (p.nombre || ""))}" target="_blank" rel="noopener" class="flex-1 text-center border border-blue-600 text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-sm font-medium">Consultar</a>
+          <button data-act="agregar" ${agotado ? "disabled" : ""} class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg text-sm font-medium">Agregar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  pintarCarrito();
+}
+
+/* ---------- Carrito ---------- */
+function guardarCarrito() { try { localStorage.setItem("carrito", JSON.stringify(carrito)); } catch (e) {} }
+function pintarCarrito() {
+  const ids = Object.keys(carrito).filter(id => productos.some(p => p.id === id));
+  $("cantCarrito").textContent = ids.reduce((s, id) => s + carrito[id], 0);
+  if (!ids.length) { $("itemsCarrito").innerHTML = `<p class="text-gray-500 text-sm">Todavía no agregaste productos.</p>`; $("totalCarrito").textContent = ""; return; }
+  let total = 0, sinPrecio = false;
+  $("itemsCarrito").innerHTML = ids.map(id => {
+    const p = productos.find(x => x.id === id);
+    if (p.precio > 0) total += p.precio * carrito[id]; else sinPrecio = true;
+    return `<div class="flex items-center justify-between gap-2 text-sm" data-id="${esc(id)}">
+      <span class="flex-1">${esc(p.nombre)}</span>
+      <button data-act="menos" class="w-7 h-7 border rounded">−</button>
+      <span class="w-5 text-center">${carrito[id]}</span>
+      <button data-act="mas" class="w-7 h-7 border rounded">+</button>
+      <span class="w-20 text-right">${p.precio > 0 ? money(p.precio * carrito[id]) : "Consultar"}</span></div>`;
+  }).join("");
+  $("totalCarrito").textContent = "Total: " + money(total) + (sinPrecio ? " + a consultar" : "");
+}
+function cambiarCant(id, d) {
+  carrito[id] = (carrito[id] || 0) + d;
+  if (carrito[id] <= 0) delete carrito[id];
+  guardarCarrito(); pintarCarrito();
+}
+$("btnCarrito").onclick = () => { pintarCarrito(); $("dlgCarrito").showModal(); };
+$("cerrarCarrito").onclick = () => $("dlgCarrito").close();
+$("itemsCarrito").addEventListener("click", e => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  cambiarCant(b.closest("[data-id]").dataset.id, b.dataset.act === "mas" ? 1 : -1);
+});
+$("enviarPedido").onclick = () => {
+  const ids = Object.keys(carrito).filter(id => productos.some(p => p.id === id));
+  if (!ids.length) return toast("Tu pedido está vacío", true);
+  let total = 0, sinPrecio = false;
+  const lineas = ids.map(id => {
+    const p = productos.find(x => x.id === id), n = carrito[id];
+    if (p.precio > 0) { total += p.precio * n; return `• ${n}x ${p.nombre} - ${money(p.precio * n)}`; }
+    sinPrecio = true; return `• ${n}x ${p.nombre} - precio a consultar`;
+  });
+  const msg = `Hola, quiero hacer este pedido:\n${lineas.join("\n")}\n\nTotal: ${money(total)}${sinPrecio ? " + a consultar" : ""}`;
+  window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
+};
+
+/* ---------- Eventos del catálogo ---------- */
+$("grid").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const id = b.closest("[data-id]").dataset.id, act = b.dataset.act;
+  if (act === "agregar") { cambiarCant(id, 1); toast("Agregado al pedido"); }
+  else if (act === "editar") abrirProducto(productos.find(p => p.id === id));
+  else if (act === "eliminar" && admin && confirm("¿Eliminar este producto?")) {
+    try { await deleteDoc(doc(db, "productos", id)); toast("Producto eliminado"); cargar(); }
+    catch (err) { console.error(err); toast("No se pudo eliminar. Revisá los permisos.", true); }
+  }
+});
+$("grid").addEventListener("error", e => { if (e.target.tagName === "IMG" && e.target.src !== PH) e.target.src = PH; }, true);
+$("cats").addEventListener("click", e => {
+  const b = e.target.closest("button[data-cat]"); if (!b) return;
+  filtro.cat = b.dataset.cat; pintarCategorias(); render();
+});
+$("buscar").addEventListener("input", e => { filtro.q = e.target.value; render(); });
+$("orden").addEventListener("change", e => { filtro.orden = e.target.value; render(); });
+
+/* ---------- Administrador ---------- */
+let editandoId = null;
+let imagenActual = "";
+
+// Reduce la foto a 800px y la convierte a JPEG liviano (~50-120 KB)
+function comprimirImagen(file, maxLado = 800, calidad = 0.72) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, maxLado / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k);
+      c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", calidad));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("No se pudo leer la imagen")); };
+    img.src = url;
+  });
+}
+$("fFoto").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  $("fFotoEstado").textContent = "Procesando foto...";
+  try {
+    imagenActual = await comprimirImagen(f);
+    $("fPreview").src = imagenActual;
+    $("fFotoEstado").textContent = "Foto lista (" + Math.round(imagenActual.length * 0.75 / 1024) + " KB)";
+  } catch (err) {
+    console.error(err);
+    $("fFotoEstado").textContent = "No se pudo usar esa foto. Probá con otra.";
+  }
+});
+
+onAuthStateChanged(auth, user => {
+  admin = !!user;
+  $("btnNuevo").classList.toggle("hidden", !admin);
+  $("btnAdmin").innerHTML = admin ? '<i class="fas fa-sign-out-alt text-lg"></i>' : '<i class="fas fa-cog text-lg"></i>';
+  $("btnAdmin").title = admin ? "Cerrar sesión" : "Administrador";
+  render();
+});
+$("btnAdmin").onclick = async () => {
+  if (admin) { await signOut(auth); toast("Sesión cerrada"); } else $("dlgLogin").showModal();
+};
+$("cancelLogin").onclick = () => $("dlgLogin").close();
+$("formLogin").addEventListener("submit", async e => {
+  e.preventDefault();
+  try {
+    await signInWithEmailAndPassword(auth, $("loginEmail").value, $("loginPass").value);
+    $("dlgLogin").close(); $("loginPass").value = ""; toast("Sesión iniciada");
+  } catch (err) { console.error(err); toast("Email o contraseña incorrectos", true); }
+});
+
+function abrirProducto(p) {
+  editandoId = p ? p.id : null;
+  $("tituloProd").textContent = p ? "Editar producto" : "Nuevo producto";
+  $("fNombre").value = p?.nombre || "";
+  $("fCategoria").value = p?.categoria || CATS[0];
+  $("fPrecio").value = p?.precio ?? "";
+  $("fDesc").value = p?.descripcion || "";
+  imagenActual = p?.imagen || "";
+  $("fPreview").src = urlSegura(imagenActual);
+  $("fFoto").value = "";
+  $("fFotoEstado").textContent = "Desde la galería o la cámara";
+  $("fAgotado").checked = !!p?.agotado;
+  $("dlgProd").showModal();
+}
+$("btnNuevo").onclick = () => abrirProducto(null);
+$("cancelProd").onclick = () => $("dlgProd").close();
+$("formProd").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!admin) return toast("Ingresá como administrador", true);
+  const datos = {
+    nombre: $("fNombre").value.trim(),
+    categoria: $("fCategoria").value,
+    precio: parseFloat($("fPrecio").value) || 0,
+    descripcion: $("fDesc").value.trim(),
+    imagen: imagenActual,
+    agotado: $("fAgotado").checked
+  };
+  try {
+    if (editandoId) await updateDoc(doc(db, "productos", editandoId), datos);
+    else await addDoc(collection(db, "productos"), { ...datos, negocioId: MI_NEGOCIO_ID, creado: new Date() });
+    $("dlgProd").close(); toast("Guardado"); cargar();
+  } catch (err) { console.error(err); toast("No se pudo guardar. Revisá los permisos.", true); }
+});
+
+pintarCategorias();
+cargar();
+</script>
+</body>
+</html>
